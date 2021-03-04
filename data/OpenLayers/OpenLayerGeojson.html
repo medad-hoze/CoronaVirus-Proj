@@ -1,0 +1,684 @@
+<html style='width:100%; height:100%;'>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <style>
+@import url(https://fonts.googleapis.com/earlyaccess/alefhebrew.css);
+	  
+	  
+/* ----- MODAL STYLE ----- */
+	.modal-content {
+			font-family: "Alef Hebrew",
+               “Helvetica Neue”,
+               Helvetica,
+               Arial,
+               sans-serif;
+	}
+	
+.typeahead, .tt-query, .tt-hint {
+	border: 2px solid #CCCCCC;
+	border-radius: 8px;
+	outline: medium none;
+}
+.typeahead {
+	background-color: #FFFFFF;
+	font-family: "Alef Hebrew",
+               “Helvetica Neue”,
+               Helvetica,
+               Arial,
+               sans-serif;
+	vertical-align: middle;
+}
+.typeahead:focus {
+	border: 2px solid #0097CF;
+}
+.tt-query {
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+}
+.tt-hint {
+	color: #999999;
+}
+.tt-menu {
+	background-color: #FFFFFF;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+	border-radius: 8px;
+	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+	margin-top: 12px;
+	width: 150px;
+}
+.tt-suggestion {
+		font-family: "Alef Hebrew",
+               “Helvetica Neue”,
+               Helvetica,
+               Arial,
+               sans-serif;
+}
+.tt-suggestion:hover {
+	cursor: pointer;
+	background-color: #0097CF;
+	color: #FFFFFF;
+}
+.tt-suggestion p {
+	margin: 0;
+}
+	
+
+
+ .ol-popup {
+        position: absolute;
+        background-color: white;
+        -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+        filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #cccccc;
+        bottom: 12px;
+        left: -50px;
+        min-width: 150px;
+      }
+      .ol-popup:after, .ol-popup:before {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+      }
+      .ol-popup:after {
+        border-top-color: white;
+        border-width: 10px;
+        left: 48px;
+        margin-left: -10px;
+      }
+      .ol-popup:before {
+        border-top-color: #cccccc;
+        border-width: 11px;
+        left: 48px;
+        margin-left: -11px;
+      }
+      .ol-popup-closer {
+        text-decoration: none;
+        position: absolute;
+        top: 2px;
+        right: 8px;
+      }
+      .ol-popup-closer:after {
+        content: "✖";
+      }	
+
+    </style>
+	
+	 <!-- Required scripts... -->
+	 
+	 <!--jquery and styles-->
+	 <script src="./js files/jquery.min.js"></script> 
+	 <link rel="stylesheet" href="./js files/w3.css">
+	 <link href="./js files/font-awesome.min.css" rel="stylesheet" type="text/css" /> 
+	 
+	 <!--vue-->
+	<script src='./js files/vue.js'></script>
+	<script src='./js files/polyfill.min.js'></script>
+	
+	<!--typeahead-->
+	 <script  type="text/javascript" src="./js files/typeahead.bundle.js"></script>
+	 
+	<!--bootstrap-->
+	<script src="./js files/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="./js files/bootstrap.min.css"></link>
+	
+	<!--vue + bootstrap-->
+	<link type="text/css" rel="stylesheet" href="./js files/bootstrap-vue.css"/>
+	<script src="./js files/bootstrap-vue.js"></script>
+		
+	<!-- Openlayers -->
+	<link rel="stylesheet" href="./js files/ol.css" />
+	<script type="text/javascript" src="./js files/ol.js"></script>
+	
+	<!-- Openlayers Ext-->
+	<link rel="stylesheet" href="./OpenLayersExt/ol-ext.css" />
+	<script type="text/javascript" src="./OpenLayersExt/ol-ext.js"></script>
+  
+  <title>OpenLayers example</title>
+  </head>
+  <body>
+		<h3 align="center">NEIGHBORHOODs_Area Web Editor</h3>
+		<div  class="border-0" style="text-align: left; vertical-align: top;">
+			<input type="text" id="string" class="typeahead tt-query" style="margin-top: -17px; text-align: left;"  autocomplete="on" spellcheck="false" placeholder="Search Name" onkeypress="return   searchKeyPress(event);" onfocus="enableNameButton();"/>
+			<button id="NameButton" style="margin: 5px; text-align: center;" class="btn btn-success" disabled>
+			Search
+			</button>
+			<button type="button" class="btn btn-primary" id="save-edits" onclick="SaveEdits()">Save Edits</button>
+			<button type="button" class="btn btn-primary" id="open_table" onclick="OpenTable()">View Table</button>
+		</div>		
+		<div id="map" style="width:100%; height:40%; float:right;"></div>
+		<div id="popup" class="ol-popup">
+		  <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+		  <div id="popup-content"></div>
+		</div>
+		<div id="content" style="width:100%; height:10%; float:right;">	
+			<div class="options" >
+				  Operation: 
+				<input type="radio" name="op" value="draw" /><label> Draw</label>
+				<input type="radio" name="op" value="modify" /><label>Modify</label>
+				<button type="button" class="btn btn-success" name="btn" id="update-data" onclick="updateData()">Update Feature</button>
+				<button type="button" class="btn btn-danger" name="btn" id="delete-data" onclick="deleteData()">Delete Feature</button>
+			</div> 
+			<div>
+			<div id="appForm">
+				<div>
+				<b-form-input v-model="text2" type="text" placeholder="Enter Neighborhood Name" />
+				</div>
+				<div>
+				<b-form-input v-model="text1" type="text" placeholder="Enter Settllement Name" />
+				</div>
+			</div>
+			</div>
+			<div class="modal-content" id="app" dir="rtl" style="text-align: right; width:100%; display: none;" data-keyboard="false" data-backdrop="static">
+			<b-table selectable
+			  :select-mode="selectMode"
+			  selected-variant="success"
+			  id="myTable" dir="rtl" style="text-align: right;" striped hover :items="items" :fields="fields"
+			  @row-selected="rowSelected">
+		    </b-table>
+			</div>
+		</div>
+	<div class="minmaxCon"></div>  
+    <script type="text/javascript">
+	var source = new ol.source.Vector({
+		url: './NEIGHBORHOODs_Area.geojson',
+		format: new ol.format.GeoJSON()
+	});
+	var myDataAll = source.getFeatures();
+
+	var count_all = source.getFeatures().length;
+	var cars_b;
+	
+	$(document).ready(function(){
+		$.getJSON( './NEIGHBORHOODs_Area.geojson', function( data ) {
+			var cars = [];
+			//console.log(data.features);
+			var features = data.features;
+			for(var i = 0; i < features.length; i++) {
+				var opt = features[i].properties.FNAME;
+				//console.log(opt);
+				cars.push(opt);
+			}
+			// Constructing the suggestion engine
+			cars_b = new Bloodhound({
+				datumTokenizer: Bloodhound.tokenizers.whitespace,
+				queryTokenizer: Bloodhound.tokenizers.whitespace,
+				local: cars
+			});
+			
+			// Initializing the typeahead
+			$('.typeahead').typeahead({
+				hint: true,
+				highlight: true, /* Enable substring highlighting */
+				minLength: 1 /* Specify minimum characters required for showing result */
+			},
+			{
+				name: 'cars',
+				source: cars_b
+			});
+			
+			//Modal Minimizer//
+			//////////////////
+			var $content, $modal, $apnData, $modalCon; 
+			$content = $(".min"); 
+			$(".modalMinimize").on("click", function(){
+				$modalCon = $(this).closest(".mymodal").attr("id");  
+				//alert($modalCon);
+				$apnData = $(this).closest(".mymodal");
+				$modal = "#" + $modalCon;
+				$(".modal-backdrop").addClass("display-none");   
+				$($modal).toggleClass("min");  
+				if ( $($modal).hasClass("min") ){ 
+					$(".minmaxCon").append($apnData);  
+					$(this).find("i").toggleClass( 'fa-minus').toggleClass( 'fa-clone');
+				} 
+				else {
+					$(".container").append($apnData); 
+					$(this).find("i").toggleClass( 'fa-clone').toggleClass( 'fa-minus');
+				};
+			});
+
+			$("button[data-dismiss='modal']").click(function(){   
+					$(this).closest(".mymodal").removeClass("min");
+					$(".container").removeClass($apnData);   
+					$(this).next('.modalMinimize').find("i").removeClass('fa fa-clone').addClass( 'fa fa-minus');
+			}); 
+			//End Modal minimizer
+		});
+		//https://www.tutorialrepublic.com/codelab.php?topic=bootstrap&file=typeahead-with-local-dataset			
+	});
+	
+	function searchKeyPress(e)
+	{
+		// look for window.event in case event isn't passed in
+		e = e || window.event;
+		console.log(document.getElementById("string").value);
+		if (e.keyCode == 13)
+		{
+			document.getElementById('NameButton').click();
+			return false;
+		}
+		$('#NameButton').prop('disabled', false);	
+		return true;
+	}
+	
+	function enableNameButton()
+	{
+		$('#NameButton').prop('disabled', false);
+	}
+	
+	// New vector layer
+	var vector = new ol.layer.Vector({
+		title: 'added Layer',
+		source: source,
+		style: getStyle
+	});
+	
+	
+	var container = document.getElementById('popup');
+	var content = document.getElementById('popup-content');
+	var closer = document.getElementById('popup-closer');
+	
+	
+	var overlay = new ol.Overlay({
+        element: container,
+        autoPan: true,
+        autoPanAnimation: {
+          duration: 250
+        }
+      });
+	  
+	        closer.onclick = function() {
+        overlay.setPosition(undefined);
+        closer.blur();
+        return false;
+      };
+	
+    var map = new ol.Map({
+        target: 'map',
+        layers: [
+        // new ol.layer.Tile({
+		// 	source: new ol.source.OSM()
+        // }),
+        ],
+		overlays: [overlay],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([34.78,32.06]),
+          zoom: 10
+        })
+    });
+	        
+	map.addLayer(vector);
+	 
+	var cars = [];
+	for(var i = 0; i < source.getFeatures().length; i++) {
+		var opt = source.getFeatures()[i].values_.FNAME;
+		console.log(opt);
+		cars.push(opt);
+	}
+	
+
+	
+	// a normal select interaction to handle click
+	var select = new ol.interaction.Select();
+	map.addInteraction(select);
+
+	 map.on('singleclick', function(evt) {
+        var click_coords = evt.coordinate;
+
+    });
+	var ccc;
+	select.on('select', function(e) {
+		myData.items = [];
+		for (i = 0; i < select.getFeatures().item.length; i++)
+		{
+			myFormInput._data.text1 = select.getFeatures().item(i).values_.SETL_NAME;
+			myFormInput._data.text2 = select.getFeatures().item(i).values_.FNAME;
+			content.innerHTML = '<code>' + select.getFeatures().item(i).values_.FNAME + ", "+ select.getFeatures().item(i).values_.SETL_NAME +
+            '</code>';
+			overlay.setPosition(ol.extent.getCenter(select.getFeatures().item(i).values_.geometry.getExtent()));
+			// open table with selected neighborhood
+			var obj = {};
+			//obj["#"] = select.getFeatures().item(i).ol_uid;//add_f.ol_uid
+			var id_list = [];
+			for (ii = 0; ii < source.getFeatures().length; ii++)
+			{
+				if (source.getFeatures()[ii].values_["FNAME"] == select.getFeatures().item(i).values_.FNAME && source.getFeatures()[ii].values_["SETL_NAME"] == select.getFeatures().item(i).values_.SETL_NAME)
+				{
+					id_list.push(ii);
+				}
+			}
+			if (id_list){
+				obj["#"] = id_list[0];
+			}
+			else {
+				obj["#"] = select.getFeatures().item(i).ol_uid;
+			}
+			obj["שם_ישוב"] = select.getFeatures().item(i).values_.SETL_NAME
+			obj["שם_שכונה"] = select.getFeatures().item(i).values_.FNAME;
+			myData.items.push(obj);		
+		}
+		$("#app").show();
+	});
+
+	var setl_text = '';
+	var neigh_text = '';
+	var myFormInput = new Vue({
+	  el: '#appForm',
+	  data: {
+		text1: setl_text,
+		text2: neigh_text
+	  }
+	});
+
+	var SetlName = myFormInput._data.text1;
+	var NeighName = myFormInput._data.text2; 
+	function updateData() {
+	  if(select){
+		SetlName = myFormInput._data.text1;
+		NeighName = myFormInput._data.text2;
+		select.getFeatures().item(0).set("SETL_NAME", SetlName);
+		select.getFeatures().item(0).set("FNAME", NeighName);
+	  } else {
+		 window.alert("You have not selected anything");
+		}
+	 };
+	 
+	function deleteData() {
+	  if (select){
+		var selectedfeature = select.getFeatures().item(0);
+		var features = source.getFeatures();
+		if (features != null && features.length > 0) {
+			for (x in features) {
+				if (source.getFeatures()[x].values_.FNAME == selectedfeature.values_.FNAME && source.getFeatures()[x].values_.SETL_NAME == selectedfeature.values_.SETL_NAME)
+				{
+					var r = confirm("delete " +source.getFeatures()[x].ol_uid + ", "+ source.getFeatures()[x].values_.FNAME);
+					if (r == true) {
+						source.removeFeature(source.getFeatures()[x]);
+						break;
+					}
+				}
+				
+				
+			}
+		}
+	  
+	  
+		SetlName = myFormInput._data.text1;
+		NeighName = myFormInput._data.text2;
+		select.getFeatures().item(0).set("SETL_NAME", SetlName);
+		select.getFeatures().item(0).set("FNAME", NeighName);
+	  } else {
+		 window.alert("You have not selected anything");
+		}
+	};
+	  
+	
+	// Style function
+    function getStyle(f) {
+      return [
+        new ol.style.Style({
+          stroke: new ol.style.Stroke({ color: '#ffcc33',width: 2 }),
+          fill: new ol.style.Fill({ color: [255,255,255,.5] }),
+		  text: createTextStyle(f)
+        }),
+        new ol.style.Style({
+          image: new ol.style.RegularShape({ radius: 4, points:4, fill: new ol.style.Fill({ color: '#f00' }) }),
+          geometry: new ol.geom.MultiPoint([f.getGeometry().getFirstCoordinate(),f.getGeometry().getLastCoordinate()])
+        })
+      ]
+    }
+	
+	var getText = function(feature) {
+		var text = feature.get('FNAME');
+		return text;
+	};
+
+	var createTextStyle = function(feature) {
+	  return new ol.style.Text({
+		textAlign: 'center',
+		textBaseline: 'middle',
+		font: '14px Verdana',
+		text: getText(feature),
+		fill: new ol.style.Fill({color: 'black'}),
+		stroke: new ol.style.Stroke({color: 'white', width: 0.5})
+	  });
+	};
+	
+
+
+	var writer = new ol.format.GeoJSON({
+		defaultDataProjection: 'EPSG:4326',
+		featureProjection: 'EPSG:3857'
+	});
+	var geojsonStr = writer.writeFeatures(source.getFeatures());
+	var geojson = JSON.parse(geojsonStr);
+	
+	function OpenTable()
+	{
+		$("#app").show();
+		myData.items = [];
+		for (i = 0; i < source.getFeatures().length; i++)
+		{
+			var obj = {};
+			obj["#"] = i;
+			obj["שם_ישוב"] = source.getFeatures()[i].values_.SETL_NAME
+			obj["שם_שכונה"] = source.getFeatures()[i].values_.FNAME;
+			myData.items.push(obj);
+		}
+	}
+	
+	var myData = {
+	   fields: [
+          {
+            key: '#',
+            sortable: true,
+			variant: 'danger'
+          },
+          {
+            key: 'שם_ישוב',
+            sortable: true
+          },
+          {
+            key: 'שם_שכונה',
+            sortable: true
+          }
+        ],
+		items:[
+		],
+		selectMode: 'range',
+        selected: []
+	};
+
+	var myTable = new Vue({
+        el: "#app",
+        data:myData,
+		methods: {
+		  rowSelected(items) {
+			this.selected = items
+			console.log(items.length);
+			if (items.length > 0)
+			{
+				select.getFeatures().clear();
+				for (i = 0; i < this.selected.length; i++)
+				{
+					{
+						var add_f = source.getFeatures()[myData.selected[i]["#"]];
+						select.getFeatures().push(add_f);
+					}
+				}
+				myFormInput._data.text1 = select.getFeatures().item(0).values_.SETL_NAME;
+				myFormInput._data.text2 = select.getFeatures().item(0).values_.FNAME;
+				content.innerHTML = '<code>' + select.getFeatures().item(0).values_.FNAME + ", "+ select.getFeatures().item(0).values_.SETL_NAME +
+				'</code>';
+				overlay.setPosition(ol.extent.getCenter(select.getFeatures().item(0).values_.geometry.getExtent()));
+				var selectedFeatures = select.getFeatures();
+				var polygon = selectedFeatures.getArray();
+				var extents = [];
+				var minX;
+				var minY;
+				var maxX;
+				var maxY;
+				var final_extent = [minX, minY, maxX, maxY];
+				//ol extent structure: [minX, minY, maxX, maxY]
+				for (p = 0; p < polygon.length; p++)
+				{
+					var extent = polygon[p].getGeometry().getExtent();
+					if (p == 0)
+					{
+						minX = extent[0];
+						minY = extent[1];
+						maxX = extent[2]; 
+						maxY = extent[3]; 			
+					}
+					else{
+						if (extent[0] < minX)
+						{minX = extent[0];}
+						if (extent[1] < minY)
+						{minY = extent[1];}
+						if (extent[2] > maxX)
+						{minX = extent[2];}
+						if (extent[3] > maxX)
+						{minX = extent[3];}
+					}
+				}
+				var final_extent = [minX, minY, maxX, maxY];
+				map.getView().fit(final_extent);
+				}
+			}
+		}
+    })
+
+    var interactions = {
+      draw: new ol.interaction.Draw({
+        source: vector.getSource(),
+        type: "Polygon"
+      }),
+      modify: new ol.interaction.Modify ({
+        source: vector.getSource(),
+        // insertVertexCondition: function(){ return false; }
+      })
+    }
+	
+	for (var i in interactions) map.addInteraction(interactions[i]);
+
+    setInteraction = function (){
+      $(".options > div").html("");
+      var name = $('[name="op"]:checked').val();
+      for (var i in interactions) {
+        interactions[i].set("active", (i==name));
+      }
+    }
+    setInteraction();
+
+    $("label").click(function(){$(this).prev().click();});
+    $("input:radio").on("change",setInteraction);
+
+    // Add snap to get multi modification
+    map.addInteraction(new ol.interaction.Snap({ 
+      source: vector.getSource(), 
+      pixelTolerance: 5 
+    }));
+
+	var filename = "NEIGHBORHOODs_Area";
+	function SaveEdits()
+	{
+		var writer = new ol.format.GeoJSON({
+                        defaultDataProjection: 'EPSG:4326',
+                        featureProjection: 'EPSG:3857'
+                    });
+		geojsonStr = writer.writeFeatures(source.getFeatures());
+		geojson = JSON.parse(geojsonStr);
+		console.log(geojson);
+		$.ajax
+		({
+		  type: "POST",
+		  url: "http://localhost:3030/"+filename,
+		  crossDomain:true, 
+		  dataType: "json",
+		  data:JSON.stringify(geojson)
+		 }).done(function ( data ) {
+			geojson_src = data;
+			alert(data.features.length);
+		  
+	   });	
+	}
+	
+	$(function(){
+		$('#NameButton').on('click', function (e) {
+			name = document.getElementById("string").value.trim();
+			console.log(name);
+			
+			if (name != "")
+			{
+				select.getFeatures().clear();
+				var filteredData = source.getFeatures().filter(function(item) {
+					return item.values_["FNAME"] == name;
+				});
+				ids = []
+				for (i = 0; i < source.getFeatures().length; i++)
+				{
+					if (source.getFeatures()[i].values_.FNAME == name)
+					{
+						ids.push(i);
+					}
+				}
+				myData.items = [];
+				for (i = 0; i < filteredData.length; i++)
+				{
+					var add_f = filteredData[i];
+					select.getFeatures().push(add_f);
+
+					
+					var obj = {};
+					obj["#"] = ids[i];//add_f.ol_uid;
+					obj["שם_ישוב"] = filteredData[i].values_.SETL_NAME
+					obj["שם_שכונה"] = filteredData[i].values_.FNAME;
+					myData.items.push(obj);
+				}
+				$("#app").show();
+				var selectedFeatures = select.getFeatures();
+				var polygon = selectedFeatures.getArray();
+				var extents = [];
+				var minX;
+				var minY;
+				var maxX;
+				var maxY;
+				var final_extent = [minX, minY, maxX, maxY];
+				//[minX, minY, maxX, maxY]
+				for (p = 0; p < polygon.length; p++)
+				{
+					var extent = polygon[p].getGeometry().getExtent();
+					if (p == 0)
+					{
+						minX = extent[0];
+						minY = extent[1];
+						maxX = extent[2]; 
+						maxY = extent[3]; 			
+					}
+					else{
+						if (extent[0] < minX)
+						{minX = extent[0];}
+						if (extent[1] < minY)
+						{minY = extent[1];}
+						if (extent[2] > maxX)
+						{maxX = extent[2];}
+						if (extent[3] > maxY)
+						{maxY = extent[3];}
+					}
+				}
+				var final_extent = [minX, minY, maxX, maxY];
+				map.getView().fit(final_extent);
+			}
+		});
+	});
+	 
+    </script>
+  </body>
+</html>
