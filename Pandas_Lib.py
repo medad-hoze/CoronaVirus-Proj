@@ -3,6 +3,11 @@
 import pandas as pd
 import numpy  as np
 
+import osr,ogr
+
+### Class ###
+
+
 
 class Layer_Engine():
 
@@ -24,9 +29,14 @@ class Layer_Engine():
         self.df.to_csv(csv_name)
 
 
-    def drop_fields(self,fields):
-        for i in fields:
-            self.df = self.df.drop([i], axis=1)
+    def drop_fields(self,fields_list):
+        self.df.drop(columns = fields_list, axis=1)
+
+    def drop_nulls(self,field):
+        self.df = self.df.dropna(how = 'any',subset=[field])
+
+    def Sum(self,field):
+        return self.df[field].sum()
 
 
     def Get_min_max_ofGroup(self,GroupingField,SearcField):
@@ -91,6 +101,48 @@ class Layer_Engine():
         if Update_df:
             self.df = df2
 
+    def coord_from_WGS84_to_IsraelUTM(self,field_X,field_Y):
+        self.df['X_Y']  = self.df.apply(lambda row: get_proj_osr(row[field_X] , row[field_Y]), axis=1)
+
+    def return1_if_in_list(self,new_field,check_field,listValues):
+        self.df[new_field] = self.df.apply(lambda row: check_syn(row[check_field],listValues), axis=1)
+
+
+
+#####  Func   ####
+
+
+def check_syn(value,list_check):
+    '''
+    list_check = ['חבד','חב"ד','בי"כ','בני ברק','חסידי','בית מדרש',"בית כנסת",'תורה','ישיבה','בית הכנסת','ישיבת']
+    '''
+    a = [i for i in list_check if value if i in value]
+    if a:
+        return 1
+
+
+def get_proj_osr(pointX,pointY):
+    inputEPSG = 4326
+    outputEPSG = 2039
+    
+    # create a geometry from coordinates
+    point = ogr.Geometry(ogr.wkbPoint)
+    point.AddPoint(pointX, pointY)
+    
+    # create coordinate transformation
+    inSpatialRef = osr.SpatialReference()
+    inSpatialRef.ImportFromEPSG(inputEPSG)
+    
+    outSpatialRef = osr.SpatialReference()
+    outSpatialRef.ImportFromEPSG(outputEPSG)
+    
+    coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef)
+    
+    # transform point
+    point.Transform(coordTransform)
+    
+    # print point in EPSG 4326
+    return str(point.GetX()) +'-'+ str(point.GetY())
 
 
 def read_excel_sheets(path2):
