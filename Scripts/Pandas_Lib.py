@@ -34,16 +34,10 @@ class Layer_Engine():
     def drop_fields(self,fields_list):
         self.df.drop(columns = fields_list, axis=1)
 
-    def drop_nulls(self,field):
-        self.df = self.df.dropna(how = 'any',subset=[field])
 
     def Sum(self,field):
         return self.df[field].sum()
     
-    def interpolate(self,fields_list):
-        self.df = self.df.sort_values(fields_list).interpolate()
-
-
     def Get_min_max_ofGroup(self,GroupingField,SearcField):
         gb_obj            = self.df.groupby (by = GroupingField)
         df_min            = gb_obj.agg     ({SearcField : np.min})
@@ -92,6 +86,15 @@ class Layer_Engine():
 
     def del_null(self,field):
         self.df = self.df[self.df[field].isnull()]
+        
+    def map_null(self):
+        return self.df.isnull().sum()
+    
+    def interpolate_null(self,fields_list):
+        self.df = self.df.sort_values(fields_list).interpolate()
+        
+    def drop_null(self,field):
+        self.df = self.df.dropna(how = 'any',subset=[field])
 
     def del_if_in(self,field,df_or_list,reverse = False):
         ''' df_or_list = result['index1']'''
@@ -103,6 +106,7 @@ class Layer_Engine():
         df2["RANK"] = self.df.groupby(GroupField)[RankField].rank(method='first',ascending=False)
         if first_rank:
             df2     = self.df[self.df['RANK'] == 1]
+            return df2
         if Update_df:
             self.df = df2
 
@@ -214,6 +218,4 @@ def read_excel_sheets(path2):
 path = r"C:\Users\Administrator\Desktop\CoronaProj\data_test.csv"
 df_e = Layer_Engine(path)
 
-
-df_e.Outo_Corr('score',0.3)
 
