@@ -3,11 +3,12 @@
 import pandas as pd
 import numpy  as np
 import matplotlib.pyplot as plt
-
-try:
-    import osr,ogr
-except:
-    pass
+from sqlalchemy import create_engine
+# import sqlite3
+# try:
+#     import osr,ogr
+# except:
+#     pass
 
 class Layer_Engine():
 
@@ -120,15 +121,38 @@ class Layer_Engine():
         plt.yticks(list(range(len(self.numaric_columns))),self.numaric_df)
         plt.show()
 
-
+    def Replace(self,field, replace_dict):
+        '''replace_dict = {'m': 0, 'w': 1} '''
+        self.df[field] = self.df[field].replace(replace_dict)
+        
+    def Outo_Replace(self):
+        for i in self.columns:
+            dic = {}
+            uni = self.df[i].unique()
+            if len(uni) == 2:
+                dic[uni[0]] = 0
+                dic[uni[1]] = 1
+                self.df[i]  = self.df[i].replace(dic)
+                self.df[i]  = pd.to_numeric(self.df[i])
+                print ("On column: {}".format(i))
+                print ("Convert: {}".format(dic))
+                
+    def sql_sentence(self,sql_query,tabel_name):
+        '''
+        tabel_name = table
+        sql_query  = SELECT DISTINCT gender from table;
+        '''
+        engine = create_engine('sqlite://'  ,  echo = False) 
+        df_e.df.to_sql     (tabel_name, con = engine)
+        return engine.execute(sql_query).fetchall()
+        
 
 def check_syn(value,list_check):
     '''
     list_check = ['חבד','חב"ד','בי"כ','בני ברק','חסידי','בית מדרש',"בית כנסת",'תורה','ישיבה','בית הכנסת','ישיבת']
     '''
     a = [i for i in list_check if value if i in value]
-    if a:
-        return 1
+    return 1 if a else 0
 
 # def get_proj_osr(pointX,pointY):
 #     inputEPSG = 4326
@@ -172,10 +196,4 @@ def read_excel_sheets(path2):
 # path = r"C:\Users\Administrator\Desktop\CoronaProj\data.csv"
 
 path = r"C:\Users\Administrator\Desktop\CoronaProj\data_test.csv"
-
 df_e = Layer_Engine(path)
-
-df_e.Check_Corr()
-
-
-
