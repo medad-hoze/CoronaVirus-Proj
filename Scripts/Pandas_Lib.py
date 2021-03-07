@@ -87,9 +87,19 @@ class Layer_Engine():
     def del_null(self,field):
         self.df = self.df[self.df[field].isnull()]
         
-    def map_null(self):
+    def map_Columns_null(self):
         return self.df.isnull().sum()
     
+    def map_Index_null(self,value = ''):
+        index_null = self.df.isnull().sum(axis=1)
+        plt.hist(index_null)
+        plt.show()
+        if value != '':
+            self.df = self.df[index_null.sort_values(ascending = False) >= float(value)]
+            index_null = self.df.isnull().sum(axis=1)
+            plt.hist(index_null)
+            plt.show()
+        
     def interpolate_null(self,fields_list):
         self.df = self.df.sort_values(fields_list).interpolate()
         
@@ -215,7 +225,7 @@ def read_excel_sheets(path2):
 
 # path = r"C:\Users\Administrator\Desktop\CoronaProj\data.csv"
 
-path = r"C:\Users\Administrator\Desktop\CoronaProj\data_test.csv"
+path = r"C:\Users\Administrator\Desktop\CoronaProj\data.csv"
 df_e = Layer_Engine(path)
 
 
