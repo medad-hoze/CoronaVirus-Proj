@@ -137,6 +137,22 @@ class Layer_Engine():
                 print ("On column: {}".format(i))
                 print ("Convert: {}".format(dic))
                 
+    def Outo_Date(self):
+        for i in self.columns:
+            if self.df[i].astype(str).str.contains('/').all():
+                print (i)
+                self.df['DATE'] = pd.to_datetime(self.df[i])
+                
+    def Outo_Corr(self,Y_Field,value = 0.6, replace_values = True):
+        columns_low_corr = [k for k,v in dict(df_e.df.corr()[Y_Field].\
+                           sort_values(ascending = False)[1:]).items()if v > value]
+        
+        if replace_values:
+            self.df = self.df[columns_low_corr]
+        else:
+            return columns_low_corr
+            
+                
     def sql_sentence(self,sql_query,tabel_name):
         '''
         tabel_name = table
@@ -197,3 +213,7 @@ def read_excel_sheets(path2):
 
 path = r"C:\Users\Administrator\Desktop\CoronaProj\data_test.csv"
 df_e = Layer_Engine(path)
+
+
+df_e.Outo_Corr('score',0.3)
+
