@@ -1,25 +1,26 @@
-
+# -*- coding: utf-8 -*-
 
 import pandas as pd
 import numpy  as np
+import matplotlib.pyplot as plt
 
-import osr,ogr
-
-### Class ###
-
-
+try:
+    import osr,ogr
+except:
+    pass
 
 class Layer_Engine():
 
-    def __init__(self,data,columns):
+    def __init__(self,csv):
+        
+        numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 
-        self.data            = data
-        self.len_columns     = len(columns)
-        self.df              = pd.DataFrame(data = self.data, columns = columns)
+        self.df              = pd.read_csv  (csv)
         self.len_rows        = self.df.shape[0]
-        self.columns         = columns
-
-        self.df_count = False
+        self.columns         = self.df.columns
+        self.df_count        = False
+        self.numaric_df      = self.df.select_dtypes(include=numerics)
+        self.numaric_columns = self.numaric_df.columns
         
 
     def Create_CSV(self,csv_name,set_index = ''):
@@ -37,6 +38,9 @@ class Layer_Engine():
 
     def Sum(self,field):
         return self.df[field].sum()
+    
+    def interpolate(self,fields_list):
+        self.df = self.df.sort_values(fields_list).interpolate()
 
 
     def Get_min_max_ofGroup(self,GroupingField,SearcField):
@@ -101,15 +105,21 @@ class Layer_Engine():
         if Update_df:
             self.df = df2
 
-    def coord_from_WGS84_to_IsraelUTM(self,field_X,field_Y):
-        self.df['X_Y']  = self.df.apply(lambda row: get_proj_osr(row[field_X] , row[field_Y]), axis=1)
 
     def return1_if_in_list(self,new_field,check_field,listValues):
         self.df[new_field] = self.df.apply(lambda row: check_syn(row[check_field],listValues), axis=1)
+        
+    # def coord_from_WGS84_to_IsraelUTM(self,field_X,field_Y):
+    #     self.df['X_Y']  = self.df.apply(lambda row: get_proj_osr(row[field_X] , row[field_Y]), axis=1)
+    
+    def Check_Corr(self):
 
+        plt.matshow(self.df.corr(),cmap = 'summer')
+        plt.colorbar()
+        plt.xticks(list(range(len(self.numaric_columns))),self.numaric_df)
+        plt.yticks(list(range(len(self.numaric_columns))),self.numaric_df)
+        plt.show()
 
-
-#####  Func   ####
 
 
 def check_syn(value,list_check):
@@ -120,30 +130,28 @@ def check_syn(value,list_check):
     if a:
         return 1
 
-
-def get_proj_osr(pointX,pointY):
-    inputEPSG = 4326
-    outputEPSG = 2039
+# def get_proj_osr(pointX,pointY):
+#     inputEPSG = 4326
+#     outputEPSG = 2039
     
-    # create a geometry from coordinates
-    point = ogr.Geometry(ogr.wkbPoint)
-    point.AddPoint(pointX, pointY)
+#     # create a geometry from coordinates
+#     point = ogr.Geometry(ogr.wkbPoint)
+#     point.AddPoint(pointX, pointY)
     
-    # create coordinate transformation
-    inSpatialRef = osr.SpatialReference()
-    inSpatialRef.ImportFromEPSG(inputEPSG)
+#     # create coordinate transformation
+#     inSpatialRef = osr.SpatialReference()
+#     inSpatialRef.ImportFromEPSG(inputEPSG)
     
-    outSpatialRef = osr.SpatialReference()
-    outSpatialRef.ImportFromEPSG(outputEPSG)
+#     outSpatialRef = osr.SpatialReference()
+#     outSpatialRef.ImportFromEPSG(outputEPSG)
     
-    coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef)
+#     coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef)
     
-    # transform point
-    point.Transform(coordTransform)
+#     # transform point
+#     point.Transform(coordTransform)
     
-    # print point in EPSG 4326
-    return str(point.GetX()) +'-'+ str(point.GetY())
-
+#     # print point in EPSG 4326
+#     return str(point.GetX()) +'-'+ str(point.GetY())
 
 def read_excel_sheets(path2):
     x1 = pd.ExcelFile(path2)
@@ -160,3 +168,14 @@ def read_excel_sheets(path2):
         df = df.append(sheet,ignore_index = True)
             
     return df
+
+# path = r"C:\Users\Administrator\Desktop\CoronaProj\data.csv"
+
+path = r"C:\Users\Administrator\Desktop\CoronaProj\data_test.csv"
+
+df_e = Layer_Engine(path)
+
+df_e.Check_Corr()
+
+
+
