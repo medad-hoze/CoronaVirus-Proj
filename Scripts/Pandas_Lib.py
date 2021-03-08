@@ -5,18 +5,18 @@ import numpy  as np
 import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
 # import sqlite3
-# try:
-#     import osr,ogr
-# except:
-#     pass
+
 
 class Layer_Engine():
 
-    def __init__(self,csv):
+    def __init__(self,csv,multi_sheets = False):
         
         numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-
+        
         self.df              = pd.read_csv  (csv)
+        if multi_sheets:
+            self.df = read_excel_sheets(csv)
+            
         self.len_rows        = self.df.shape[0]
         self.columns         = self.df.columns
         self.df_count        = False
@@ -95,7 +95,7 @@ class Layer_Engine():
         plt.hist(index_null)
         plt.show()
         if value != '':
-            self.df = self.df[index_null.sort_values(ascending = False) >= float(value)]
+            self.df = self.df[index_null.sort_values(ascending = False) <= float(value)]
             index_null = self.df.isnull().sum(axis=1)
             plt.hist(index_null)
             plt.show()
@@ -124,9 +124,7 @@ class Layer_Engine():
     def return1_if_in_list(self,new_field,check_field,listValues):
         self.df[new_field] = self.df.apply(lambda row: check_syn(row[check_field],listValues), axis=1)
         
-    # def coord_from_WGS84_to_IsraelUTM(self,field_X,field_Y):
-    #     self.df['X_Y']  = self.df.apply(lambda row: get_proj_osr(row[field_X] , row[field_Y]), axis=1)
-    
+  
     def Check_Corr(self):
 
         plt.matshow(self.df.corr(),cmap = 'summer')
@@ -155,16 +153,18 @@ class Layer_Engine():
         for i in self.columns:
             if self.df[i].astype(str).str.contains('/').all():
                 print (i)
-                self.df['DATE'] = pd.to_datetime(self.df[i])
+                self.df['DATE']    = pd.to_datetime(self.df[i])
+                self.df['month']   = self.df['DATE'].dt.month
+                self.df['year']    = self.df['DATE'].dt.year
+                self.df['quarter'] = self.df['DATE'].dt.quarter
+                self.df['weekday'] = self.df['DATE'].dt.weekday
                 
-    def Outo_Corr(self,Y_Field,value = 0.6, replace_values = True):
-        columns_low_corr = [k for k,v in dict(df_e.df.corr()[Y_Field].\
+                
+    def Outo_Corr(self,Y_Field,value = 0.6):
+        columns_low_corr = [k for k,v in dict(self.df.corr()[Y_Field].\
                            sort_values(ascending = False)[1:]).items()if v > value]
         
-        if replace_values:
-            self.df = self.df[columns_low_corr]
-        else:
-            return columns_low_corr
+        return columns_low_corr
             
                 
     def sql_sentence(self,sql_query,tabel_name):
@@ -173,9 +173,15 @@ class Layer_Engine():
         sql_query  = SELECT DISTINCT gender from table;
         '''
         engine = create_engine('sqlite://'  ,  echo = False) 
-        df_e.df.to_sql     (tabel_name, con = engine)
+        self.df.to_sql     (tabel_name, con = engine)
         return engine.execute(sql_query).fetchall()
+    
+    def Time_Month_Count(self):
+        df_layer.df.month.value_counts().sort_index().plot()
         
+    def Time_Delta(self):
+        return (self.df['DATE'].max() - self.df['DATE'].min()).days
+    
 
 def check_syn(value,list_check):
     '''
@@ -184,28 +190,6 @@ def check_syn(value,list_check):
     a = [i for i in list_check if value if i in value]
     return 1 if a else 0
 
-# def get_proj_osr(pointX,pointY):
-#     inputEPSG = 4326
-#     outputEPSG = 2039
-    
-#     # create a geometry from coordinates
-#     point = ogr.Geometry(ogr.wkbPoint)
-#     point.AddPoint(pointX, pointY)
-    
-#     # create coordinate transformation
-#     inSpatialRef = osr.SpatialReference()
-#     inSpatialRef.ImportFromEPSG(inputEPSG)
-    
-#     outSpatialRef = osr.SpatialReference()
-#     outSpatialRef.ImportFromEPSG(outputEPSG)
-    
-#     coordTransform = osr.CoordinateTransformation(inSpatialRef, outSpatialRef)
-    
-#     # transform point
-#     point.Transform(coordTransform)
-    
-#     # print point in EPSG 4326
-#     return str(point.GetX()) +'-'+ str(point.GetY())
 
 def read_excel_sheets(path2):
     x1 = pd.ExcelFile(path2)
@@ -225,7 +209,10 @@ def read_excel_sheets(path2):
 
 # path = r"C:\Users\Administrator\Desktop\CoronaProj\data.csv"
 
-path = r"C:\Users\Administrator\Desktop\CoronaProj\data.csv"
-df_e = Layer_Engine(path)
-
-
+path = r"C:\Users\Administrator\Desktop\CoronaProj\data_test.csv"
+df_layer = Layer_Engine   (path)
+df_layer.Outo_Replace     ()
+df_layer.Outo_Date        ()
+df_layer.Check_Corr       ()
+df_layer.Time_Month_Count ()
+df_layer.Time_Delta       ()
