@@ -6,6 +6,34 @@ import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
 # import sqlite3
 
+# Create_CSV
+# drop_fields
+# Sum
+# Get_min_max_ofGroup
+# Count_field
+# Len_field
+# Filter_df
+# Groupby_and_count
+# Dict
+# del_null
+# map_Index_null
+# map_Columns_null
+# interpolate_null
+# drop_null
+# del_if_in
+# Group_and_Rank
+# return1_if_in_list
+# Check_Corr
+# Replace
+# Outo_Replace
+# Outo_Date
+# Outo_Corr
+# sql_sentence
+# Time_Month_Count
+# Time_Delta
+# read_excel_sheets
+# Replace_Cha_to_num
+# convert_datatype
 
 class Layer_Engine():
 
@@ -87,8 +115,6 @@ class Layer_Engine():
     def del_null(self,field):
         self.df = self.df[self.df[field].isnull()]
         
-    def map_Columns_null(self):
-        return self.df.isnull().sum()
     
     def map_Index_null(self,value = ''):
         index_null = self.df.isnull().sum(axis=1)
@@ -99,6 +125,12 @@ class Layer_Engine():
             index_null = self.df.isnull().sum(axis=1)
             plt.hist(index_null)
             plt.show()
+
+    def map_Columns_null(self):
+        # columns =  result.isnull().sum()[result.isnull().sum() > 0]
+        null_columns = self.df.columns[self.df.isnull().any()]
+        columns      = self.df[null_columns].isnull().sum()
+        return columns
         
     def interpolate_null(self,fields_list):
         self.df = self.df.sort_values(fields_list).interpolate()
@@ -181,7 +213,26 @@ class Layer_Engine():
         
     def Time_Delta(self):
         return (self.df['DATE'].max() - self.df['DATE'].min()).days
-    
+
+    def Replace_Cha_to_num(self,field):
+        def Change_data(x):
+            x = str(x)
+            li = []
+            for i,v in enumerate(x):
+                if v.isnumeric() or v == '.':
+                    li.append(v)
+
+            str2 = ''.join(li)
+            if not str2:
+                str2 = None
+            return str2
+
+        self.df[field] = self.df[field].apply(lambda x: Change_data(x))
+
+    def convert_datatype(self):
+        self.df = self.df.convert_dtypes()
+
+
 
 def check_syn(value,list_check):
     '''
