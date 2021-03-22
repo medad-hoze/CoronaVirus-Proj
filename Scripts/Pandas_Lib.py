@@ -28,6 +28,7 @@ from sqlalchemy import create_engine
 # Outo_Replace
 # Outo_Date
 # Outo_Corr
+# Fix_date_foramt
 # sql_sentence
 # Time_Month_Count
 # Time_Delta
@@ -168,6 +169,7 @@ class Layer_Engine():
     def Replace(self,field, replace_dict):
         '''replace_dict = {'m': 0, 'w': 1} '''
         self.df[field] = self.df[field].replace(replace_dict)
+
         
     def Outo_Replace(self):
         for i in self.columns:
@@ -197,7 +199,35 @@ class Layer_Engine():
                            sort_values(ascending = False)[1:]).items()if v > value]
         
         return columns_low_corr
-            
+
+    def Fix_date_foramt(self,date_field,year = ''):
+
+        '''
+        fix dates if there are mix types like: אוג-26  and 26/8/2019
+        you need to pass year or it will take the first year it see and brodcast
+        '''
+
+        def dict_():
+            nam   = ['ינו','נוב','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ']
+            num   = [1,2,3,4,5,5,6,7,8,9,10,11,12]
+            Dict_ = dict(zip(nam,num))
+            return Dict_
+
+        def Convert_Wrong_Dates(value,year,Dict_):
+            # convert bad dates as: אוק-21 to 21/10/2019
+            if '-' in str(value):
+                key   = value.split('-')[1]
+                if Dict_.get(key):
+                    month = Dict_[key]
+                    day   = str(value.split('-')[0])
+                    value = day + '/' + str(month) + '/' + str(year)   
+            return value
+
+        if year == '':
+            year = str(self.df[self.df[date_field].astype(str).str.contains("/")][date_field].iloc[0]).split('/')[2]
+
+        self.df[date_field] = self.df[date_field].apply(lambda x: Convert_Wrong_Dates(x,year,dict_()))
+        
                 
     def sql_sentence(self,sql_query,tabel_name):
         '''
